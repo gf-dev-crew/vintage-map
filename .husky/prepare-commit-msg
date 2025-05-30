@@ -1,0 +1,24 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# $1: 커밋 메시지 파일 경로
+# $2: 커밋 소스 (message, template, merge, squash, etc.)
+
+# $1: msg 파일, $2: 커밋 소스 (message, merge, squash, template, ...)
+# merge/squash 커밋만 건너뛰기
+case "$2" in
+  merge|squash) exit 0 ;;
+esac
+
+# 1. 현재 브랜치 이름
+BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
+
+# 2. 브랜치명에서 '#숫자' 부분만 추출 (예: feat#111-login → #111)
+ISSUE_TAG=$(echo "$BRANCH_NAME" | grep -oE '#[0-9]+' || true)
+
+# 3. 추출된 게 있으면 커밋 메시지 앞에 삽입
+if [ -n "$ISSUE_TAG" ]; then
+  # sed -i.bak 은 mac/linux 공용으로 백업 파일(.bak) 만들어 줍니다
+  sed -i.bak "1s/^/[$ISSUE_TAG] /" "$1"
+fi
+
